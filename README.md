@@ -74,7 +74,7 @@ def apply_fn(model_state, params, x, x_shape):
     xd = rfft(x)
     kd = rfft(k)
     
-    ## Perform the multiplication on the transformed versions, and then perform an inverse transform
+    ## Multiply the transformed versions, and then perform an inverse transform
     out = irfft(xd * kd)
     return out
 
