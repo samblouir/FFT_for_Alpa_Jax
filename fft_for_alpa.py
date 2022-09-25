@@ -25,10 +25,13 @@ def _rfft(x:np.ndarray, signal_length:int) -> np.ndarray:
 	return ft
 
 def _irfft(y:np.ndarray, signal_length:int) -> np.ndarray:
-	if (signal_length % 2 == 0):
-		e = signal_length
-	else:
-		e = signal_length-1
+
+	e = signal_length
+	## Unused until support for odd signal lengths is added.
+	# if (signal_length % 2 == 0):
+	# 	e = signal_length
+	# else:
+	# 	e = signal_length-1
 
 	to_conj = y[1:e][::-1]
 	conj =  np.conjugate(to_conj)
@@ -90,9 +93,10 @@ def __test_fn__(x:np.ndarray, shape:tuple, rtol:float = 1e-1, atol:float = 1e-1,
 		worst_tranformation_percentage_error = np.abs(1 - (transformed[s] / comparison[s]))
 		return {
 			"worst_tranformation_percentage_error":worst_tranformation_percentage_error,
+			"worst_transforation_absolute_error": np.abs(transformed[s] - comparison[s]),
+			# "current_signal_length": transformed.shape[-1],
 			# "worst_tranformation": transformed[s],
 			# "worst_tranformation_comparison": comparison[s],
-			# "worst_transformer_absolute_error": np.abs(transformed[s] - comparison[s]),
 		}
 
 
@@ -100,8 +104,6 @@ def __test_fn__(x:np.ndarray, shape:tuple, rtol:float = 1e-1, atol:float = 1e-1,
 		###################
 		## Test #1
 		###################
-		x = np.copy(original_x)
-
 		transformed_x = rfft(x)
 		inverse_transformed_x = irfft(transformed_x)
 
@@ -173,14 +175,14 @@ def __mp_args__(args):
 
 
 
-def __run_tests__(fuzzes:int = 2, use_multiprocessing:bool = False, max_length:int = 2**14, max_dims = 1,):
+def __run_tests__(fuzzes:int = 50, use_multiprocessing:bool = False, min_length:int = 1, max_length:int = 8, max_dims = 1,):
 	if use_multiprocessing:
 		import multiprocessing as mp
 		jax.config.update('jax_platforms', 'cpu')
 
 	print(
 		f"  Running {fuzzes} tests. This may take a while...",
-		f"  use_multiprocessing: {use_multiprocessing}",
+		f"\n  use_multiprocessing: {use_multiprocessing}",
 		f", max_length: {max_length}",
 		f", max_dims: {max_dims}",
 		sep='',
@@ -196,7 +198,7 @@ def __run_tests__(fuzzes:int = 2, use_multiprocessing:bool = False, max_length:i
 
 	## Better options for later testing with >1D support
 	shapes = jax.random.randint(shape_rng, (fuzzes,), 1, max_dims+1)
-	dims = jax.random.randint(dims_rng, (fuzzes, max_dims,), 1, max_length)
+	dims = jax.random.randint(dims_rng, (fuzzes, max_dims,), min_length, max_length)
 	dims += (dims % 2) ## Makes the dims even
 	## Sorts dims so we can get a progress bar up quicker by letting the smallest dims go first.
 	## This won't affect the final results.
@@ -225,17 +227,26 @@ def __run_tests__(fuzzes:int = 2, use_multiprocessing:bool = False, max_length:i
 			results = [__run_args__(*args) for args in zip(uniform_rngs, shapes, dims)]
 
 	
-	## Average our results
-	average_results = {}
+	##  Process the results.
+	average_results = {} ## Find the average of the results
+	worst_results = {}  ## Find the worst of the results
 	for result in results:
-		for k, v in result.items():
-			for _k, _v in v.items():
-				flat_key = f"{k}.{_k}"
-				average_results[flat_key] = average_results.get(flat_key, []) + [_v]
+		for (k, v) in result.items():
+			for (name_of_test_type, test_value) in v.items():
+				flat_key = f"{k}.{name_of_test_type}"
+				average_results[flat_key] = average_results.get(flat_key, []) + [test_value]
+				if k != "stats":
+					worst_results[flat_key] = max(worst_results.get(flat_key, 0), test_value)
 	average_results = {f"average_{k}": np.mean(np.array(v)) for k, v in average_results.items()}
+	worst_results = {f"worst_{k}": np.mean(np.array(v)) for k, v in worst_results.items()}
+
+	## Print out results
+	print(f"\n" * 3, end='',)
 	print(f"*" * 60,)
 	import pprint
 	pprint.pp(average_results)
+	print(f"\n" * 3, end='',)
+	pprint.pp(worst_results)
 	print(f"*" * 60,)
 
 if __name__ == "__main__":
