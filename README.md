@@ -59,15 +59,13 @@ import alpa
 import fft_for_alpa
 
 def apply_fn(model_state, params, x, x_shape):
-    (fft, ifft, rfft, irfft,) = fft_for_alpa.get_fft_functions(x_shape[-1])
-    
-    y = embeddings_layer(x)
+    (fft, ifft, rfft, irfft,) = fft_for_alpa.get_fft_functions(x_shape[-1])  
     k = self.params("convolution_kernel")
     
-    yd = rfft(y)
+    xd = rfft(x)
     kd = rfft(k)
     
-    out = irfft(y * k)
+    out = irfft(xd * kd)
     return out
 
 # Parallelize the training step in Jax by simply using a decorator
