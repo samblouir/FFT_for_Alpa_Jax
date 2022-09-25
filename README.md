@@ -1,4 +1,4 @@
-# FFT_for_Jax_Alpa
+# FFT_for_Alpa_Jax
 Adds FFT functions to Alpa, for Jax.
 
 [Alpa](https://github.com/alpa-projects/alpa) is an auto-parallelization that automates large-scale distributed training. [Unfortunately, it is incompatible with Jax's implementations of FFTs (as of Alpa version 0.2.0)](https://github.com/alpa-projects/alpa/issues/713). This repo provides easy-to-use FFT, IFFT, RFFT, and IRFFT functions that are compatible with Alpa.
