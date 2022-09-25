@@ -1,5 +1,7 @@
 ## TODO: Re-implement using Chex
-## TODO: Fix issues with 
+## TODO: Fix rare issues with precision on long sequences (16k+)
+## TODO: Support vmap
+## TODO: Support odd length sequences
 
 # import numpy as np
 import jax.numpy as np
