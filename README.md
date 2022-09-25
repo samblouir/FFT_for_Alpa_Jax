@@ -25,7 +25,7 @@ import alpa
 import fft_for_alpa
 
 def apply_fn(model_state, params, x, x_shape):
-    (fft, ifft, rfft, irfft,) = alpa.get_fft_functions(x_shape[-1])
+    (fft, ifft, rfft, irfft,) = fft_for_alpa.get_fft_functions(x_shape[-1])
     x = rfft(x)
     x = irfft(x)
     return x    
