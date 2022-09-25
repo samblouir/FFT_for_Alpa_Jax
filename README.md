@@ -9,11 +9,16 @@ In some cases, cuDNN is supposed to automatically detect certain criteria and au
 
 ## Issues
 
-**Currently, fft_for_alpa supports evenly-shaped, 1D data only**
+Currently, fft_for_alpa supports evenly-shaped, 1D data only
 
-**Sequences of length >=16,384 may hang indefinitely on compile**
+Sequences of length >=16,384 may hang indefinitely on compile
 
-**While the average FFT/RFFT and IFFT/IRFFT error is less than 2% in the included testing, a rare divergence with Jax's FFT function can result with very long sequences where a single value in the array may be off by ~25%+.**
+While the average FFT/RFFT and IFFT/IRFFT error is less than 2% in the included testing, a rare divergence with Jax's FFT functions may result with very long sequences where at least one value in the returned array may be off by ~25%+.
+
+Unit testing must be made more thorough:
+["To verify the correctness of an FFT implementation, rigorous guarantees can be obtained in O(N log N) time by a simple procedure checking the linearity, impulse-response, and time-shift properties of the transform on random inputs (Ergün, 1995)."](https://en.wikipedia.org/wiki/Fast_Fourier_transform#Computational_issues:~:text=To%20verify%20the%20correctness%20of%20an%20FFT%20implementation%2C%20rigorous%20guarantees%20can%20be%20obtained%20in%20O(N%C2%A0log%C2%A0N)%20time%20by%20a%20simple%20procedure%20checking%20the%20linearity%2C%20impulse%2Dresponse%2C%20and%20time%2Dshift%20properties%20of%20the%20transform%20on%20random%20inputs%20(Erg%C3%BCn%2C%201995).%5B39%5D)
+
+
 
 ## Usage
 Put fft_for_alpa.py in your source folder and import it as shown below.
@@ -59,12 +64,15 @@ import alpa
 import fft_for_alpa
 
 def apply_fn(model_state, params, x, x_shape):
+    ## rfft is faster
     (fft, ifft, rfft, irfft,) = fft_for_alpa.get_fft_functions(x_shape[-1])  
     k = self.params("convolution_kernel")
     
+    ## Calculate the transformed versions of x and k
     xd = rfft(x)
     kd = rfft(k)
     
+    ## Perform the multiplication on the transformed versions, and then perform an inverse transform
     out = irfft(xd * kd)
     return out
 
