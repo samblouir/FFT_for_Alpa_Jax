@@ -80,8 +80,8 @@ def create_fourier_weights(signal_length:int, rfft:bool=True,):
 
 
 def __test_fn__(x:np.ndarray, shape:tuple, rtol:float = 1e-1, atol:float = 1e-1, use_allclose_tests:bool = False,):
-	## allclose, rtol and atol disabled. Errors noted on long sequences (~16k length+)
-	## Average case eems to be fine.
+	## allclose is disabled by default. Inconsistencies with Jax's FFT implementation noted on long sequences (~16k length+)
+	## The average test run seems to be fine.
 
 	(fft, ifft, rfft, irfft,) = get_fft_functions(shape[-1])
 
