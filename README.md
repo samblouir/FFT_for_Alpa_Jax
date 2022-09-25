@@ -20,9 +20,10 @@ Unit testing must be made more thorough:
 
 
 
-## Usage
+## Installation
 Put fft_for_alpa.py in your source folder and import it as shown below.
 
+## Usage
 You only have to add the data shape to your apply_fn inputs and pass it to get_fft_functions() **inside** of an alpa.parallelize decoration. 
 
 
