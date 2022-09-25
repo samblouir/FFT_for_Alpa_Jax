@@ -43,7 +43,8 @@ def apply_fn(model_state, params, x, x_shape):
 @alpa.parallelize
 def train_step(model_state, batch):
     def loss_func(params):
-        out = apply_fn(model_state, params, batch["x"], batch["x"].shape) # Add the shape as an argument to the model
+        # Add the shape as an argument to the model
+        out = apply_fn(model_state, params, batch["x"], batch["x"].shape) 
         return jnp.mean((out - batch["y"]) ** 2)
 
     grads = grad(loss_func)(model_state.params)
@@ -81,7 +82,8 @@ def apply_fn(model_state, params, x, x_shape):
 @alpa.parallelize
 def train_step(model_state, batch):
     def loss_func(params):
-        out = apply_fn(model_state, params, batch["x"], batch["x"].shape) # Add the shape as an argument to the model
+        # Add the shape as an argument to the model
+        out = apply_fn(model_state, params, batch["x"], batch["x"].shape) 
         return jnp.mean((out - batch["y"]) ** 2)
 
     grads = grad(loss_func)(model_state.params)
