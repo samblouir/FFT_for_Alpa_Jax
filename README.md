@@ -10,7 +10,9 @@ This may be when you are using a convolutional filter on a very long sequence. U
 
 **Currently, fft_for_alpa supports evenly-shaped, 1D data only**
 
-**Sequences of length >=16,384 may hang indefinitely on compile **
+**Sequences of length >=16,384 may hang indefinitely on compile**
+
+**While the average FFT/RFFT and IFFT/IRFFT error is less than 2% in the included testing, a rare divergence with Jax's FFT function can result with very long sequences where a single value in the array may be off by ~25%+.**
 
 ## Usage
 Put fft_for_alpa.py in your source folder and import it as shown below.
