@@ -3,7 +3,7 @@ Adds FFT functions to Alpa, for Jax.
 
 [Alpa](https://github.com/alpa-projects/alpa) is a great auto-parallelization package that automates large-scale distribution of Jax models. [Unfortunately, it is incompatible with Jax's implementations of FFTs (as of Alpa version 0.2.0)](https://github.com/alpa-projects/alpa/issues/713). This repo provides easy-to-use FFT, IFFT, RFFT, and IRFFT functions that are compatible with Alpa.
 
-You may want to use this code if you want to do an FFT convolution. Use cases include applying a convolution to a flattened image or to an embedding. [This text provides more uses](https://www.analog.com/media/en/technical-documentation/dsp-book/dsp_book_ch18.pdf)
+You may want to use this code if you want to do an FFT convolution. Use cases include applying a convolution to a flattened image or to an embedding. [This text provides more uses.](https://www.analog.com/media/en/technical-documentation/dsp-book/dsp_book_ch18.pdf)
 
 In some cases, cuDNN is supposed to automatically detect certain criteria and automatically convert convolutions on long sequences to FFT convolutions, but I have found that this process is not always succesful and so the FFT transformation must be done manually. This failure can occur from virtually indefinite compiling that can take many hours. This can compile within minutes.
 
@@ -21,7 +21,7 @@ Unit testing must be made more thorough:
 
 
 ## Installation
-Put fft_for_alpa.py in your source folder and import it as shown below.
+Put fft_for_alpa.py in your project folder and import it as shown below:
 
 ## Usage
 You only have to add the data shape to your apply_fn inputs and pass it to get_fft_functions() **inside** of an alpa.parallelize decoration. 
