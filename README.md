@@ -57,7 +57,7 @@ for batch in data_loader:
 ```
 
 
-### NLP Example
+### FFT Convolution Example
 ```python
 
 
