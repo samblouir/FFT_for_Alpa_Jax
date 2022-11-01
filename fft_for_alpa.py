@@ -5,18 +5,27 @@
 
 # import numpy as np
 import jax.numpy as np
+import jax.numpy as jnp
 import functools
 import jax
 
 def get_fft_functions(shape:int) -> tuple:
 	# Returns callables fns for (rfft, irfft, np.fft.rfft, np.fft.irfft) for a given shape. 
 	assert(shape%2 == 0)
+
+	# rfft_fw = create_fourier_weights(shape*2, rfft=True,)
+	# @jax.jit
+	# def rfft(x):
+	# 	ft = (x @ rfft_fw)
+	# 	return ft.at[-1].set(ft[-1].real + 0j)
+
 	fft = functools.partial(_fft, signal_length=shape, )
 	ifft = functools.partial(_ifft, signal_length=shape,)
 	rfft = functools.partial(_rfft, signal_length=shape,)
 	irfft = functools.partial(_irfft, signal_length=shape)
 	return (fft, ifft, rfft, irfft,)
 
+@functools.partial(jax.jit, static_argnums=(1,))
 def _rfft(x:np.ndarray, signal_length:int) -> np.ndarray:
 	fw = create_fourier_weights(signal_length*2, rfft=True,)
 	ft = (x @ fw)
@@ -24,6 +33,7 @@ def _rfft(x:np.ndarray, signal_length:int) -> np.ndarray:
 	ft = ft.at[-1].set(ft[-1].real + 0j) ## Jax
 	return ft
 
+@functools.partial(jax.jit, static_argnums=(1,))
 def _irfft(y:np.ndarray, signal_length:int) -> np.ndarray:
 
 	e = signal_length
@@ -37,15 +47,16 @@ def _irfft(y:np.ndarray, signal_length:int) -> np.ndarray:
 	conj =  np.conjugate(to_conj)
 	xn = np.concatenate([y,conj])
 	xn = _ifft(xn, signal_length)
-	xn = np.abs(xn)
 	xn = np.real(xn)
 	return xn
 
+@functools.partial(jax.jit, static_argnums=(1,))
 def _fft(x:np.ndarray, signal_length:int) -> np.ndarray:
 	fw = create_fourier_weights(signal_length*2, rfft=False,)
 	ft = (x @ fw)
 	return ft
 
+@functools.partial(jax.jit, static_argnums=(1,))
 def _ifft(x:np.ndarray, signal_length:int) -> np.ndarray:
 	## Modified from this fft implementation:
 	#  https://sidsite.com/posts/fourier-nets/#:~:text=checking%20is%20to-,reconstruct,-the%20signal%3A
@@ -60,7 +71,7 @@ def _ifft(x:np.ndarray, signal_length:int) -> np.ndarray:
 	reconstructed_signal = np.pad(reconstructed_signal, (0, signal_length))
 	return reconstructed_signal
 
-
+@functools.partial(jax.jit, static_argnums=(0, 1,))
 def create_fourier_weights(signal_length:int, rfft:bool=True,):  
 	## Modified from this fft implementation: 
 	# https://sidsite.com/posts/fourier-nets/#:~:text=the%20fast%20Fourier-,transform,-.
@@ -248,6 +259,44 @@ def __run_tests__(fuzzes:int = 50, use_multiprocessing:bool = False, min_length:
 	print(f"\n" * 3, end='',)
 	pprint.pp(worst_results)
 	print(f"*" * 60,)
+
+	sentence_length = 1024
+	embed_dims = 768
+
+	#########################################################################################################
+	def plain(x, k, rfft, irfft,):
+		ox = x
+		def p(x, k):
+			padded_x = jnp.pad(x, (0, sentence_length*2-x.shape[-1]))
+			xd = rfft(padded_x)
+			padded_k = jnp.pad(k, (0, sentence_length*2-k.shape[-1]))
+			kd = rfft(padded_k)
+			x = irfft(xd * kd)
+			return x[:ox.shape[0]]
+		return jax.vmap(p, in_axes=(1,0), out_axes=1)(x, k)
+
+	rng = jax.random.PRNGKey(0)
+	def split_random(shape, minval=0, maxval=1,):
+		nonlocal rng
+		rng, uniform_key = jax.random.split(rng)
+		x = jax.random.uniform(rng, shape=shape, minval=minval, maxval=maxval,)
+		return x
+
+	print(f"*" * 60,)
+	x = split_random((sentence_length, embed_dims), -1, 1)
+	k = split_random((4, 8,), )
+	k = split_random((4, x.shape[-1],), )
+	k = [jnp.arange(embed_dims).tolist()]*sentence_length
+	k = jnp.float32(k).T
+	(fft, ifft, rfft, irfft) = get_fft_functions(x.shape[-2],)
+
+	results = []
+	for (rfft, irfft) in tqdm.tqdm([(rfft, irfft), (jnp.fft.rfft, jnp.fft.irfft)]):
+		result = plain(x, k, rfft, irfft)
+		results.append(jnp.mean(result))
+	for results_idx, (_results) in enumerate(results):
+		print(f"  Should be allclose: results[{results_idx}]: {_results}")
+		
 
 if __name__ == "__main__":
 	__run_tests__()
